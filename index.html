@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Assistant Vocal Email — Septeo</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2e3862">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vocal Email">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange: #ff6136;
+    --orange-dark: #e04e26;
+    --orange-light: #fff3ef;
+    --orange-mid: #ff714a;
+    --navy: #2e3862;
+    --navy-light: #434c72;
+    --navy-xlight: #eaebef;
+    --violet: #4e549f;
+    --turquoise: #65d5c5;
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --border: #e4e6ee;
+    --text: #1a1d2e;
+    --text-muted: #6d7491;
+    --text-faint: #abafc0;
+    --success: #2A7A4B;
+    --success-bg: #eaf6ef;
+    --danger: #e03c3c;
+    --danger-bg: #fdeaea;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 8px rgba(46,56,98,0.07), 0 1px 2px rgba(46,56,98,0.04);
+    --shadow-md: 0 4px 20px rgba(46,56,98,0.1);
+  }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--navy);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 58px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(46,56,98,0.2);
+  }
+
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-dot {
+    width: 28px; height: 28px;
+    background: var(--orange);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .brand-dot svg { width: 16px; height: 16px; stroke: white; }
+
+  .brand-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+    letter-spacing: -0.2px;
+  }
+
+  .brand-name span { color: var(--orange); }
+
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+
+  .btn-settings {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: rgba(255,255,255,0.75);
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-settings:hover { background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.3); }
+  .btn-settings.active { background: var(--orange); color: white; border-color: var(--orange); }
+  .btn-settings svg { width: 14px; height: 14px; }
+
+  /* ── SETTINGS PANEL ── */
+  .settings-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(30,35,60,0.4);
+    z-index: 200;
+    backdrop-filter: blur(2px);
+  }
+  .settings-overlay.open { display: block; }
+
+  .settings-panel {
+    position: fixed;
+    top: 0; right: 0;
+    width: 380px;
+    height: 100vh;
+    background: var(--surface);
+    box-shadow: -4px 0 32px rgba(46,56,98,0.15);
+    padding: 0;
+    z-index: 201;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .settings-panel.open { transform: translateX(0); }
+
+  .settings-header {
+    padding: 1.2rem 1.5rem;
+    background: var(--navy);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .settings-header h2 { font-size: 14px; font-weight: 600; color: white; }
+  .btn-close-settings {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,0.15);
+    color: white; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .btn-close-settings:hover { background: rgba(255,255,255,0.25); }
+
+  .settings-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
+
+  .settings-section-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 0.8rem;
+  }
+
+  .settings-info {
+    background: var(--navy-xlight);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--navy-light);
+    line-height: 1.7;
+    margin-bottom: 1.2rem;
+  }
+  .settings-info ol { padding-left: 1.1rem; }
+  .settings-info a { color: var(--orange); font-weight: 500; }
+
+  .field-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    display: block;
+  }
+
+  .settings-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .settings-input:focus { border-color: var(--orange); background: white; }
+
+  .btn-save-key {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--orange);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-save-key:hover { background: var(--orange-dark); }
+
+  .key-status { font-size: 11px; margin-top: 7px; }
+  .key-ok { color: var(--success); }
+  .key-err { color: var(--danger); }
+
+  .divider-settings { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .page-title {
+    margin-bottom: 1.5rem;
+  }
+  .page-title h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--navy);
+    letter-spacing: -0.3px;
+  }
+  .page-title p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-weight: 300;
+  }
+
+  /* Steps */
+  .steps {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
+  .step-num {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    background: var(--bg); color: var(--text-faint);
+    border: 1.5px solid var(--border);
+    transition: all 0.35s;
+  }
+  .step.active .step-num { background: var(--orange); color: white; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,97,54,0.15); }
+  .step.done .step-num { background: var(--success-bg); color: var(--success); border-color: #a8d8bc; }
+  .step-label { font-size: 10px; font-weight: 500; color: var(--text-faint); text-align: center; }
+  .step.active .step-label { color: var(--orange); }
+  .step.done .step-label { color: var(--success); }
+  .step-line { flex: 1; height: 1.5px; background: var(--border); margin-top: 15px; max-width: 40px; transition: background 0.35s; }
+  .step-line.done { background: #a8d8bc; }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 0.6rem;
+  }
+
+  input[type="email"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 1.2rem;
+  }
+  input[type="email"]:focus { border-color: var(--orange); background: white; }
+
+  /* Tone buttons */
+  .tone-row { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 1.2rem; }
+  .tone-btn {
+    padding: 5px 13px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--bg);
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .tone-btn:hover { border-color: var(--orange); color: var(--orange); }
+  .tone-btn.active { background: var(--orange-light); color: var(--orange); border-color: var(--orange); }
+
+  /* Mic zone */
+  .mic-zone {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    border: 1.5px dashed var(--border);
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .mic-zone.listening {
+    background: var(--danger-bg);
+    border-color: var(--danger);
+    border-style: solid;
+  }
+
+  #micBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 22px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+  }
+  #micBtn:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  #micBtn.listening { background: var(--danger); color: white; border-color: var(--danger); }
+
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.25)} }
+  .pulse { animation: pulse 0.9s ease-in-out infinite; }
+
+  #statusText { margin-top: 9px; font-size: 12px; color: var(--text-faint); min-height: 18px; }
+
+  #transcriptBox {
+    margin-top: 1rem;
+    padding: 11px 13px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    min-height: 60px;
+    display: none;
+    text-align: left;
+    font-weight: 300;
+  }
+  .interim { color: var(--text-faint); }
+
+  /* Generate button */
+  .btn-generate {
+    width: 100%;
+    padding: 13px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--orange) 0%, var(--orange-mid) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    transition: all 0.2s;
+    box-shadow: 0 3px 12px rgba(255,97,54,0.35);
+    letter-spacing: 0.01em;
+  }
+  .btn-generate:hover { transform: translateY(-1px); box-shadow: 0 5px 20px rgba(255,97,54,0.4); }
+  .btn-generate:active { transform: translateY(0); }
+  .btn-generate:disabled {
+    background: var(--border);
+    color: var(--text-faint);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Loader */
+  .loader { display: none; text-align: center; padding: 2rem; }
+  .loader-dots { display: inline-flex; gap: 6px; align-items: center; margin-bottom: 9px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); animation: bounce 1.2s ease-in-out infinite; }
+  .dot:nth-child(2) { animation-delay: 0.18s; }
+  .dot:nth-child(3) { animation-delay: 0.36s; }
+  @keyframes bounce { 0%,100%{transform:translateY(0);opacity:0.3} 50%{transform:translateY(-7px);opacity:1} }
+  .loader p { font-size: 12px; color: var(--text-muted); font-weight: 300; }
+
+  /* Result */
+  #resultCard { display: none; margin-top: 0; }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .badge-ok {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: var(--success-bg);
+    color: var(--success);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .email-preview {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .email-meta {
+    padding: 8px 14px;
+    background: var(--navy-xlight);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .email-meta + .email-meta { border-top: none; }
+  .meta-key { color: var(--text-faint); font-weight: 500; min-width: 48px; }
+  .meta-val { color: var(--navy); font-weight: 600; }
+  .email-body-zone { padding: 14px; background: white; }
+
+  #emailBodyDisplay {
+    font-size: 13px;
+    line-height: 1.85;
+    color: var(--text);
+    white-space: pre-wrap;
+    font-weight: 300;
+  }
+  #emailBodyEdit {
+    display: none;
+    width: 100%;
+    min-height: 200px;
+    padding: 10px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    line-height: 1.85;
+    color: var(--text);
+    background: var(--bg);
+    resize: vertical;
+    outline: none;
+    font-weight: 300;
+  }
+  #emailBodyEdit:focus { border-color: var(--orange); }
+
+  .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .btn-outlook {
+    padding: 11px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+  }
+  .btn-outlook:hover { border-color: var(--navy); background: var(--navy); color: white; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+  .btn-row-sm { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-sm {
+    flex: 1; padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px; font-weight: 500;
+    cursor: pointer; background: transparent;
+    color: var(--text-muted); transition: all 0.15s;
+  }
+  .btn-sm:hover { border-color: var(--orange); color: var(--orange); }
+
+  .btn-edit {
+    padding: 5px 14px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px; font-weight: 500;
+    cursor: pointer; background: var(--bg);
+    color: var(--text-muted); transition: all 0.15s;
+  }
+  .btn-edit:hover { border-color: var(--orange); color: var(--orange); }
+
+  .hint { font-size: 11px; color: var(--text-faint); text-align: center; margin-top: 8px; line-height: 1.6; font-weight: 300; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-faint);
+    margin-top: 2.5rem;
+    font-weight: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .footer-dot {
+    width: 6px; height: 6px;
+    border-radius: 2px;
+    background: var(--orange);
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-dot">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+      </svg>
+    </div>
+    <span class="brand-name">Assistant <span>Vocal</span> Email</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-settings" id="settingsBtn" onclick="toggleSettings()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      Paramètres
+    </button>
+  </div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="settings-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-header">
+    <h2>⚙ Paramètres</h2>
+    <button class="btn-close-settings" onclick="closeSettings()">✕</button>
+  </div>
+  <div class="settings-body">
+    <div class="settings-section-title">Clé API Mistral (gratuite)</div>
+    <div class="settings-info">
+      <ol>
+        <li>Allez sur <a href="https://console.mistral.ai/api-keys/" target="_blank">console.mistral.ai/api-keys</a></li>
+        <li>Créez un compte avec votre email</li>
+        <li>Cliquez <strong>Create new key</strong></li>
+        <li>Copiez et collez la clé ci-dessous</li>
+      </ol>
+    </div>
+    <label class="field-label">Votre clé API</label>
+    <input type="password" class="settings-input" id="apiKeyInput" placeholder="Collez votre clé Mistral..." />
+    <button class="btn-save-key" onclick="saveKey()">Enregistrer la clé</button>
+    <div class="key-status" id="keyStatus"></div>
+
+    <div class="divider-settings"></div>
+
+    <div class="settings-section-title">À propos</div>
+    <div class="settings-info" style="font-size:11px; line-height:1.8;">
+      Assistant vocal email propulsé par <strong>Mistral AI</strong> (gratuit).<br>
+      Dictez en vrac, l'IA rédige un email professionnel,<br>
+      Outlook s'ouvre prêt à envoyer.
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <div class="page-title">
+    <h2>Rédaction d'email par la voix</h2>
+    <p>Dictez votre idée — l'IA s'occupe du reste</p>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active" id="s1"><div class="step-num">1</div><div class="step-label">Dicter</div></div>
+    <div class="step-line" id="l1"></div>
+    <div class="step" id="s2"><div class="step-num">2</div><div class="step-label">Génération</div></div>
+    <div class="step-line" id="l2"></div>
+    <div class="step" id="s3"><div class="step-num">3</div><div class="step-label">Vérifier</div></div>
+    <div class="step-line" id="l3"></div>
+    <div class="step" id="s4"><div class="step-num">4</div><div class="step-label">Envoyer</div></div>
+  </div>
+
+  <!-- Formulaire -->
+  <div class="card">
+    <div class="card-title">Destinataire</div>
+    <input type="email" id="recipient" placeholder="client@etude.fr" />
+
+    <div class="card-title">Ton</div>
+    <div class="tone-row">
+      <button class="tone-btn active" id="tone-professionnel" onclick="setTone('professionnel')">Professionnel</button>
+      <button class="tone-btn" id="tone-formel" onclick="setTone('formel')">Formel</button>
+      <button class="tone-btn" id="tone-amical" onclick="setTone('amical')">Amical</button>
+      <button class="tone-btn" id="tone-concis" onclick="setTone('concis')">Concis</button>
+      <button class="tone-btn" id="tone-urgent" onclick="setTone('urgent')">Urgent</button>
+    </div>
+
+    <div class="card-title">Dictée</div>
+    <div class="mic-zone" id="micZone">
+      <button id="micBtn" onclick="toggleMic()">
+        <span id="micIconWrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </span>
+        <span id="micLabel">Commencer la dictée</span>
+      </button>
+      <div id="statusText">Cliquez pour parler</div>
+      <div id="transcriptBox"></div>
+    </div>
+  </div>
+
+  <!-- Bouton générer -->
+  <button class="btn-generate" id="generateBtn" onclick="generateEmail()" disabled>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
+    </svg>
+    Générer l'email
+  </button>
+
+  <!-- Loader -->
+  <div class="loader" id="loader">
+    <div class="loader-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <p>Mistral rédige votre email en cours...</p>
+  </div>
+
+  <!-- Résultat -->
+  <div class="card" id="resultCard">
+    <div class="result-header">
+      <span class="badge-ok">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Email généré
+      </span>
+      <button class="btn-edit" id="editToggleBtn" onclick="editToggle()">Modifier</button>
+    </div>
+
+    <div class="email-preview">
+      <div class="email-meta">
+        <span class="meta-key">À :</span>
+        <span class="meta-val" id="displayTo">—</span>
+      </div>
+      <div class="email-meta" style="border-top: 1px solid var(--border);">
+        <span class="meta-key">Objet :</span>
+        <span class="meta-val" id="displaySubject">—</span>
+      </div>
+      <div class="email-body-zone">
+        <div id="emailBodyDisplay"></div>
+        <textarea id="emailBodyEdit" oninput="syncBody()"></textarea>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-outlook" onclick="openOutlookDesktop()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+        Outlook Bureau
+      </button>
+      <button class="btn-outlook" onclick="openOutlookWeb()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        Outlook Web
+      </button>
+    </div>
+    <p class="hint">Outlook s'ouvre avec l'email pré-rempli — vérifiez et cliquez Envoyer</p>
+
+    <div class="btn-row-sm" style="margin-top: 1rem;">
+      <button class="btn-sm" onclick="regenerate()">↺ Régénérer</button>
+      <button class="btn-sm" onclick="clearAll()">✕ Recommencer</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-dot"></div>
+    Propulsé par Mistral AI · Modèle mistral-small-latest · Gratuit
+    <div class="footer-dot"></div>
+  </div>
+
+</div>
+
+<script>
+let recognition = null;
+let isListening = false;
+let currentTone = 'professionnel';
+let finalTranscript = '';
+let generatedSubject = '';
+let generatedBody = '';
+let isEditing = false;
+let mistralKey = '';
+
+window.onload = () => {
+  const saved = localStorage.getItem('mistral_api_key');
+  if (saved) {
+    mistralKey = saved;
+    document.getElementById('apiKeyInput').value = saved;
+    document.getElementById('keyStatus').innerHTML = '<span class="key-ok">✓ Clé enregistrée et prête</span>';
+  }
+};
+
+function toggleSettings() {
+  const panel = document.getElementById('settingsPanel');
+  const overlay = document.getElementById('settingsOverlay');
+  const btn = document.getElementById('settingsBtn');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open');
+  overlay.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+
+function closeSettings() {
+  document.getElementById('settingsPanel').classList.remove('open');
+  document.getElementById('settingsOverlay').classList.remove('open');
+  document.getElementById('settingsBtn').classList.remove('active');
+}
+
+function saveKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (val.length < 10) {
+    document.getElementById('keyStatus').innerHTML = '<span class="key-err">⚠ Clé invalide, vérifiez la valeur.</span>';
+    return;
+  }
+  mistralKey = val;
+  localStorage.setItem('mistral_api_key', val);
+  document.getElementById('keyStatus').innerHTML = '<span class="key-ok">✓ Clé enregistrée — mémorisée pour toujours</span>';
+  setTimeout(closeSettings, 1200);
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('s' + i);
+    const line = document.getElementById('l' + i);
+    el.classList.remove('active', 'done');
+    if (line) line.classList.remove('done');
+    if (i < n) { el.classList.add('done'); if (line) line.classList.add('done'); }
+    else if (i === n) el.classList.add('active');
+  }
+}
+
+function setTone(tone) {
+  currentTone = tone;
+  document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tone-' + tone)?.classList.add('active');
+}
+
+function toggleMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('La dictée vocale nécessite Chrome ou Edge.'); return; }
+  isListening ? stopMic() : startMic();
+}
+
+function startMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'fr-FR';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    isListening = true;
+    document.getElementById('micBtn').classList.add('listening');
+    document.getElementById('micLabel').textContent = 'Arrêter la dictée';
+    document.getElementById('micIconWrap').classList.add('pulse');
+    document.getElementById('micZone').classList.add('listening');
+    document.getElementById('statusText').textContent = '● Enregistrement en cours...';
+    document.getElementById('statusText').style.color = 'var(--danger)';
+    const tb = document.getElementById('transcriptBox');
+    tb.style.display = 'block';
+    tb.innerHTML = '<span class="interim">En attente de votre voix...</span>';
+  };
+
+  recognition.onresult = (e) => {
+    finalTranscript = '';
+    let interim = '';
+    for (let i = 0; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    document.getElementById('transcriptBox').innerHTML =
+      finalTranscript + (interim ? `<span class="interim">${interim}</span>` : '');
+    document.getElementById('generateBtn').disabled = !finalTranscript.trim();
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === 'not-allowed') alert('Accès micro refusé. Autorisez le microphone dans les paramètres du navigateur.');
+    stopMic();
+  };
+
+  recognition.onend = () => { if (isListening) stopMic(); };
+  recognition.start();
+}
+
+function stopMic() {
+  isListening = false;
+  if (recognition) { try { recognition.stop(); } catch(e) {} }
+  document.getElementById('micBtn').classList.remove('listening');
+  document.getElementById('micLabel').textContent = 'Commencer la dictée';
+  document.getElementById('micIconWrap').classList.remove('pulse');
+  document.getElementById('micZone').classList.remove('listening');
+  const has = finalTranscript.trim().length > 0;
+  document.getElementById('statusText').textContent = has ? '✓ Dictée terminée — cliquez sur Générer' : 'Cliquez pour parler';
+  document.getElementById('statusText').style.color = has ? 'var(--success)' : '';
+  if (has) document.getElementById('generateBtn').disabled = false;
+}
+
+async function generateEmail() {
+  const text = finalTranscript.trim();
+  if (!text) { alert('Veuillez d\'abord dicter votre message.'); return; }
+  if (!mistralKey) {
+    alert('Clé API manquante. Cliquez sur "Paramètres" en haut à droite pour l\'ajouter.');
+    toggleSettings();
+    return;
+  }
+
+  document.getElementById('generateBtn').disabled = true;
+  document.getElementById('loader').style.display = 'block';
+  document.getElementById('resultCard').style.display = 'none';
+  setStep(2);
+
+  const toneMap = {
+    professionnel: 'professionnel et courtois',
+    formel: 'très formel et soutenu',
+    amical: 'amical mais professionnel',
+    concis: 'concis et direct',
+    urgent: 'professionnel avec une notion d\'urgence'
+  };
+
+  const prompt = `Tu es un assistant expert en rédaction d'emails professionnels dans le domaine juridique, notarial et immobilier en France.
+
+Le texte ci-dessous provient d'une DICTÉE VOCALE automatique. La reconnaissance vocale fait souvent des erreurs phonétiques sur les termes techniques. Tu dois OBLIGATOIREMENT :
+1. Détecter les erreurs de transcription vocale en te basant sur le contexte et le sens de la phrase
+2. Corriger silencieusement ces erreurs en utilisant le terme juridique/notarial correct
+3. Rédiger l'email final avec les bons termes, sans jamais utiliser un mot incohérent
+
+Exemples d'erreurs vocales fréquentes dans ce domaine :
+- "prêt-à-gâté" / "pré-à-gâter" / "préhaut gaté" → "pré-état daté"
+- "loi allure" / "loi à lure" / "loi a lueur" → "loi Alur"
+- "état datif" → "état daté"
+- "compromis de vent" → "compromis de vente"
+- "acte authentifique" → "acte authentique"
+- "diagnostic immobilier" mal orthographié → corriger
+- "règlement de copro" → "règlement de copropriété"
+- "promesse synallagmatique" mal prononcée → corriger
+- "servitude de passage" mal transcrite → corriger
+- "hypothèque conventionnelle" mal transcrite → corriger
+- Tout terme phonétiquement proche d'un terme juridique connu → corriger vers le terme juridique
+
+Notes dictées : "${text}"
+
+Rédige un email complet de ton ${toneMap[currentTone]} avec :
+- Formule d'appel adaptée
+- Corps structuré, clair, avec les termes juridiques CORRECTS
+- Formule de politesse finale
+- Termine par "Cordialement," suivi d'une ligne vide pour la signature
+
+Réponds UNIQUEMENT avec un JSON valide, sans markdown ni backticks :
+{"subject": "Objet de l'email", "body": "Corps complet de l'email"}`;
+
+  try {
+    const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${mistralKey}` },
+      body: JSON.stringify({
+        model: 'mistral-small-latest',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 1000
+      })
+    });
+
+    const data = await res.json();
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('generateBtn').disabled = false;
+
+    if (data.error) { alert('Erreur Mistral : ' + (data.error.message || JSON.stringify(data.error))); setStep(1); return; }
+
+    let raw = data.choices[0].message.content.trim().replace(/```json\n?|```\n?/g, '').trim();
+    const parsed = JSON.parse(raw);
+    generatedSubject = parsed.subject || '';
+    generatedBody = parsed.body || '';
+
+    const recipient = document.getElementById('recipient').value.trim() || '—';
+    document.getElementById('displayTo').textContent = recipient;
+    document.getElementById('displaySubject').textContent = generatedSubject;
+    document.getElementById('emailBodyDisplay').textContent = generatedBody;
+    document.getElementById('emailBodyEdit').value = generatedBody;
+    document.getElementById('emailBodyDisplay').style.display = 'block';
+    document.getElementById('emailBodyEdit').style.display = 'none';
+    document.getElementById('editToggleBtn').textContent = 'Modifier';
+    isEditing = false;
+    document.getElementById('resultCard').style.display = 'block';
+    setStep(3);
+    document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  } catch (err) {
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('generateBtn').disabled = false;
+    setStep(1);
+    alert('Erreur : ' + err.message);
+    console.error(err);
+  }
+}
+
+function editToggle() {
+  isEditing = !isEditing;
+  document.getElementById('emailBodyDisplay').style.display = isEditing ? 'none' : 'block';
+  document.getElementById('emailBodyEdit').style.display = isEditing ? 'block' : 'none';
+  document.getElementById('editToggleBtn').textContent = isEditing ? 'Valider' : 'Modifier';
+  if (!isEditing) {
+    generatedBody = document.getElementById('emailBodyEdit').value;
+    document.getElementById('emailBodyDisplay').textContent = generatedBody;
+  }
+}
+
+function syncBody() { generatedBody = document.getElementById('emailBodyEdit').value; }
+
+function openOutlookDesktop() {
+  setStep(4);
+  const to = encodeURIComponent(document.getElementById('recipient').value.trim());
+  window.location.href = `mailto:${to}?subject=${encodeURIComponent(generatedSubject)}&body=${encodeURIComponent(generatedBody)}`;
+}
+
+function openOutlookWeb() {
+  setStep(4);
+  const to = encodeURIComponent(document.getElementById('recipient').value.trim());
+  window.open(`https://outlook.office.com/mail/deeplink/compose?to=${to}&subject=${encodeURIComponent(generatedSubject)}&body=${encodeURIComponent(generatedBody)}`, '_blank');
+}
+
+function regenerate() { document.getElementById('resultCard').style.display = 'none'; generateEmail(); }
+
+function clearAll() {
+  finalTranscript = ''; generatedSubject = ''; generatedBody = '';
+  document.getElementById('recipient').value = '';
+  document.getElementById('transcriptBox').innerHTML = '';
+  document.getElementById('transcriptBox').style.display = 'none';
+  document.getElementById('statusText').textContent = 'Cliquez pour parler';
+  document.getElementById('statusText').style.color = '';
+  document.getElementById('generateBtn').disabled = true;
+  document.getElementById('resultCard').style.display = 'none';
+  setStep(1);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
